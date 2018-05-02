@@ -27,3 +27,39 @@ Seurat_from_10Xfile <- function(object, min_cells = 1, min_genes = 200, max_gene
 }
 
 # -----------------------------------------------------------------------------------------------------
+
+# This function calculates the % of cells that are above a certain threshold in a list.
+
+pct.above <- function(x, threshold) {
+	return(length(x = x[x > threshold]) / length(x = x))
+}
+
+# -----------------------------------------------------------------------------------------------------
+
+# This function takes the Seurat object and a gene list, and determines the average expression and the
+# percentage of the cells expressing the genes on the list for each cluster of cells.
+
+gene_per_cluster_exp_pct <- function(object, gene.list) {
+
+	library(dplyr)
+	library(tidyr)
+
+	# first we extract the information regarding the genes of interest from the Seurat object and store
+	# it in a dataframe. Next we create 2 new categories: the cell identifier, and cluster.
+	data.to.analyze <- data.frame(FetchData(object = object, vars.all = gene.list))
+	data.to.analyze$cell <- rownames(x = data.to.analyze)
+	data.to.analyze$id <- object@ident
+	
+	# Next, we use the gather function (from dplyr and tidyr) to reorganize the dataframe based on genes
+	# and the value we care about is the expression of that gene in the cell. We dont want to categorize
+	# based on cell and cluster (hence they are put in as "-".
+	data.to.analyze %>% gather(key = gene.list, value = expression, -c(cell, id)) -> data.to.analyze
+	
+	# Next we use group_by to group the dataframe based on cluster (id) and gene.list so we get the average
+	# expression of each gene in our list in each of the clusters and the percentage of the cells in that
+	# cluster expressing the gene.
+	data.to.analyze %>% group_by(id, gene.list) %>% summarize(avg.exp = ExpMean(x = expression),
+		pct.exp = pct.above(x = expression, threshold = 0)) -> data.to.analyze
+	
+	return(data.to.analyze)
+}

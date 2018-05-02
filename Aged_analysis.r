@@ -43,3 +43,6 @@ cat("----", "\n")
 cat("Performing non-linear dimensional reduction", "\n")
 aged <- RunTSNE(object = aged, dims.use = 1:20, do.fast = TRUE)
 TSNEPlot(object = aged)
+
+# To save the results, we use the following code:
+saveRDS(aged, file = "C:/Users/sadeg/Google Drive/scRNA/data/Aged_analysis/aged.rds")

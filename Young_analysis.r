@@ -43,3 +43,6 @@ cat("----", "\n")
 cat("Performing non-linear dimensional reduction", "\n")
 young <- RunTSNE(object = young, dims.use = 1:20, do.fast = TRUE)
 TSNEPlot(object = young)
+
+# To save the results, we use the following code:
+saveRDS(young, file = "C:/Users/sadeg/Google Drive/scRNA/data/Young_analysis/young.rds")
