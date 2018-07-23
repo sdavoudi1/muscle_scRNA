@@ -1,4 +1,5 @@
 # Analysis_functions
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 
 # This file contains the functions used in the various scripts.
 
@@ -18,6 +19,28 @@ Seurat_from_10Xfile <- function(object, min_cells = 1, min_genes = 200, max_gene
 	percent.mito <- Matrix::colSums(datasample@raw.data[mito.genes, ])/Matrix::colSums(datasample@raw.data)
 	datasample <- AddMetaData(object = datasample, metadata = percent.mito, col.name = "percent.mito")
 	datasample <- FilterCells(object = datasample, subset.names = c("nGene", "nUMI","percent.mito"), low.thresholds = c(min_genes, -Inf, -Inf), high.thresholds = c(max_genes, max_nUMI, max_percent_mito))
+	datasample <- NormalizeData(object = datasample, normalization.method = "LogNormalize", scale.factor = 10000)
+	datasample <- ScaleData(object = datasample, vars.to.regress = c("nUMI"))
+	
+	# Next we find the variable genes in the dataset
+	datasample <- FindVariableGenes(object = datasample, do.plot = F, display.progress = F)
+		
+	# Next we return the Seurat object
+	return(datasample)
+}
+
+# -----------------------------------------------------------------------------------------------------
+
+# This function is similar to the Seurat_from_10Xfile function with the exception that it only performs the
+# normalization, scaling, and finding variable genes steps. The input is a Seurat object that we want
+# to work on.
+
+normalize_scale_fvg <- function(datasample) {
+
+	# Make sure packages exist
+	if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
+	library(Seurat)
+
 	datasample <- NormalizeData(object = datasample, normalization.method = "LogNormalize", scale.factor = 10000)
 	datasample <- ScaleData(object = datasample, vars.to.regress = c("nUMI"))
 	

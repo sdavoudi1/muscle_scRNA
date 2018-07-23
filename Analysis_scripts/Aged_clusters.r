@@ -1,4 +1,5 @@
-# Aged_analysis.R
+# Aged_clusters.R
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Aged_clusters.r")
 # Analysis of aged muscle scRNA
 
 # This scripts takes the aged muscle scRNA data and combines them using the Seurat algorithm
@@ -18,6 +19,9 @@ cat("Creating aged Seurat Object", "\n")
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Aged_seurat_object.r")
 cat("----", "\n")
 
+# Here we save the unprocessed Seurat object for the aged data.
+saveRDS(aged, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/aged_preanalysis.rds")
+
 # Perform linear dimensional reduction
 cat("Performing linear dimensional reduction", "\n")
 aged <- RunPCA(object = aged, pc.genes = aged@var.genes, do.print = FALSE)
@@ -34,6 +38,7 @@ cat("----", "\n")
 
 # Cluster cells
 cat("Clustering cells", "\n")
+
 aged <- FindClusters(object = aged, reduction.type = "pca", dims.use = 1:20, resolution = 0.6, print.output = 0, save.SNN = TRUE)
 cat("----", "\n")
 
