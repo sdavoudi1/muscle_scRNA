@@ -7,7 +7,8 @@
 # --------------------------------------------------------------------------------------------------------
 
 # This script requires the Seurat library.
-# library(Seurat)
+if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
+	library(Seurat)
 
 # Next we load the functions we need
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")

@@ -1,7 +1,8 @@
-# Young_analysis.R
+# Young_clusters.R
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Young_clusters.r")
 # Analysis of young muscle scRNA
 
-# This scripts takes the young muscle scRNA data and combines them using the Seurat algorithm
+# This scripts takes the young muscle scRNA data and analyzes them using the Seurat algorithm
 # outlined in Butler et al, Nat Biotech, 2018.
 
 # --------------------------------------------------------------------------------------------------------
@@ -19,6 +20,9 @@ source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
 cat("Creating young Seurat Object", "\n")
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Young_seurat_object.r")
 cat("----", "\n")
+
+# Here we save the raw unprocessed Seurat object of the young data
+saveRDS(young, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_preanalysis.rds")
 
 # Perform linear dimensional reduction
 cat("Performing linear dimensional reduction", "\n")
