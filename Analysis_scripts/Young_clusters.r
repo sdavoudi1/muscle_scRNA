@@ -7,14 +7,17 @@
 # --------------------------------------------------------------------------------------------------------
 
 # We load the required libraries.
+if(!require(Seurat)) {
+install.packages("Seurat"); require(Seurat)}
+
 library(Seurat)
 
 # # Next we load the functions we need
-# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
 
-# Next we create the aged and young Seurat objects using the scripts below:
+# Next we create the young Seurat objects using the scripts below:
 cat("Creating young Seurat Object", "\n")
-source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Young_seurat_object.r")
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Young_seurat_object.r")
 cat("----", "\n")
 
 # Perform linear dimensional reduction
@@ -45,4 +48,4 @@ young <- RunTSNE(object = young, dims.use = 1:20, do.fast = TRUE)
 TSNEPlot(object = young)
 
 # To save the results, we use the following code:
-saveRDS(young, file = "C:/Users/sadeg/Google Drive/scRNA/data/Young_analysis/young.rds")
+saveRDS(young, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young.rds")

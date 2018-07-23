@@ -7,14 +7,15 @@
 # --------------------------------------------------------------------------------------------------------
 
 # We load the required libraries.
-library(Seurat)
+if(!require(Seurat)) {
+install.packages("Seurat"); require(Seurat)}
 
 # Next we load the functions we need
-source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Int_analysis_functions.R")
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
 
 # Next we create the aged and young Seurat objects using the scripts below:
-source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Young_seurat_object.r")
-source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Aged_seurat_object.r")
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Young_seurat_object.r")
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Aged_seurat_object.r")
 
 # Next we determine genes used for CCA. These genes will be genes that are highly variable in both datasets
 g.1 <- head(rownames(young@hvg.info), 1000)
