@@ -9,6 +9,8 @@
 
 if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
 library(Seurat)
+if(!require(plyr)) {install.packages("plyr"); require(plyr)}
+library(plyr)
 
 # Next we source the functions we need.
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
@@ -121,3 +123,11 @@ TSNEPlot(object = aged_noimmune)
 
 # To save the results, we use the following code:
 saveRDS(aged_noimmune, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/aged_noimmune.rds")
+
+# # To rename the clusters to what we want:
+# current.cluster.ids <- c(0,1,2,3,4,5,6)
+# new.cluster.ids <- c("Myo_1", "FAP_1", "Myo_2", "EC", "FAP_2", "Tenocyte", "MuSC")
+# aged_noimmune@ident <- plyr::mapvalues(x = aged_noimmune@ident, from = current.cluster.ids, to = new.cluster.ids)
+
+# # To save the results, we use the following code:
+# saveRDS(aged_noimmune, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/aged_noimmune_labeled.rds")
