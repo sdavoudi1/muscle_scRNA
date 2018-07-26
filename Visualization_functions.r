@@ -1,44 +1,166 @@
 # This file contains all the functions that were used to create the images for the 
 # scRNA Seq project.
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Visualization_functions.r")
 
 # ----------------------------------------------------------------------------------------------
 
-# This function creates a heatmap in which the values for each row are normalized between 0 and 1
+if (!require("plotly")) {install.packages("plotly"); require(plotly)}
+library(plotly)
 
-# NEEDS WORK. DO NOT USE.
-# 
+source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 
-createHeatmap <- function (input, max_color = "red", min_color = "peachpuff", show_scale = F){
+# ----------------------------------------------------------------------------------------------
 
+# This function creates a heatmap, with the average expression of the gene list for each cluster in a 
+# normalized fashion. It takes the dataset, the gene list of interest, and the order of the clusters
+# and return a heatmap for all of the genes in the list which are normalized between 0 and 1.
 
-    # Check if the package installed
-    if (!require("plotly")) {install.packages("plotly"); require(plotly)}
+# The cluster order can be either column number or name. If the dataset is unlabeled, the function takes
+# the cluster names as well. However, the cluster names are added after reordering, so add cluster names in
+# the final order.
 
+square_heatmap <- function(dataset, genes = c(), cluster_order, cluster_names) {
 
-    #Read in .csv info for heatmap
-    nba <- read.csv(input, sep=",")
-
-
-    #Make first column name of each row, take values from column [B Cells - Tendon] as table
-    row.names(nba) <- nba$Line
-    nba <- nba[,2:10]
-    nba_matrix <- data.matrix(nba)
-
-
-    #Sort matrix diagonally by the largest value of each row (top left to bottom right)
-    row.max <- apply(nba_matrix,1,which.max)
-    nba_matrix  <- nba_matrix[names(sort(row.max)),]
-
-
-    # Load plotly and create graph
-    library(plotly)
-    var <- plot_ly(x=colnames(nba_matrix), y=rownames(nba_matrix), z = nba_matrix, type = "heatmap", colors = colorRamp(c(min_color, max_color)), showscale = show_scale)
-
-
-    #Export plot using webshot then opens image
-    if (!require("webshot")) install.packages("webshot")
-    tmpFile <- tempfile(fileext = ".png")
-    export(var, file = tmpFile)
-    browseURL(tmpFile)
-
+	# We first get the average expression for each of the genes in gene list.
+	avg_exp <- AverageExpression(dataset, genes.use = genes, show.progress = F)
+	
+	# Next we reorder the columns in the avg_exp dataframe to be in the order that we want and
+	# name them if they don't have names yet.
+	if (is.numeric(cluster_order) == T) {
+		avg_exp <- avg_exp[cluster_order]
+		if ((is.character(cluster_names) == T) & (length(cluster_names) > 0)) {
+			names(avg_exp) <- cluster_names
+		}
+	}
+	if (is.character(cluster_order) == T) {
+		avg_exp <- avg_exp[, cluster_order]
+	}
+	
+	# Next we normalize the values in each row (gene) between 0 and 1.
+	avg_exp_norm <- t(apply(avg_exp, 1, function(x)(x)/(max(x))))
+	
+	# Next we draw the heatmap
+	p <- plot_ly(
+		x=colnames(avg_exp_norm),
+		y=row.names(avg_exp_norm),
+		z = avg_exp_norm,
+		type = "heatmap", showscale = T) 
+		#%>%
+		#layout(
+		#	xaxis = list(
+	
+	return(p)
 }
+
+# ----------------------------------------------------------------------------------------------
+
+# This function creates a heatmap with circles, in which the circle size depicts ratio of cells in cluster
+# expressing that gene, and the color is a normalized expression of that gene.
+
+# USE UNLABELED DATASET WITH THIS FUNCTION
+
+# Inputs: dataset, differential markers for each cluster in dataset.
+
+heatmap_w_circles <- function(dataset, diff_markers, image_name = "image.png", image_dpi = 300, 
+								imaged_width = 30, image_height = 5, n_genes = 10, cluster_names, 
+								cluster_order, chart_name = "Percent and Normalized Expression") {
+		
+	# First, we figure out the top n_genes expressed in each cluster.
+	top_genes <- diff_genes_per_cluster(diff_markers, n_genes = n_genes)
+	
+	# Next we extract the average gene expression of each cluster from the dataset and
+	# set it up in a new dataframe with the clusters as columns and genes as the rows.
+	avg_exp <- data.frame()
+	for (i in cluster_order) {
+		temp <- AverageExpression(dataset, genes.use = top_genes[,i], show.progress = F)
+		avg_exp <- rbind(avg_exp, temp)
+	}
+	avg_exp <- avg_exp[cluster_order]
+	
+	# Next we normalize the expression in each row so the max is set as 1.
+	avg_exp_norm <- data.frame(t(apply(avg_exp, 1, function(x)(x)/(max(x)))))
+	
+	# Next we rename the columns to the names we want.
+	if (length(cluster_names) > 0) {
+		names(avg_exp_norm) <- cluster_names
+	}
+	
+	# Next we extract the percentage of cells expressing each of the genes in each cluster
+	pct_exp_all <- AverageDetectionRate(dataset)
+	pct_exp <- data.frame()
+	for (i in cluster_order) {
+		temp <- pct_exp_all[top_genes[,i],]
+		pct_exp <- rbind(pct_exp, temp)
+	}
+	pct_exp <- pct_exp[cluster_order]
+	names(pct_exp) <- cluster_names
+
+	#---------------------- Next we begin drawing the heatmap with circles ---------------------
+	
+	# First, we set up the vectors (x & y labels)
+	cell_type <- c(colnames(pct_exp))
+	genes <- c(rownames(pct_exp))
+	
+	# Create the data frame (add pct_exp & avg_exp_norm to the dataframe)
+	df <- expand.grid(genes, cell_type)
+	per_expression <-  vector(mode="double", length=0)
+	for (item in pct_exp){
+		per_expression <- c(per_expression, item)
+	}
+	df$pct_exp <- per_expression
+
+	avg_expression <-  vector(mode="double", length=0)
+	for (item in avg_exp_norm){
+		avg_expression <- c(avg_expression, item)
+	}
+	df$avg_exp_norm <- avg_expression
+	
+	#Setting up background (set color interval for every n_genes)
+	rect_left <- vector(mode="integer", length=0)
+	x_pos = n_genes
+	i <- 1
+	while (i <= (length(cell_type)/2)){
+		rect_left <- c(rect_left, x_pos)
+		x_pos <- x_pos + 2*n_genes
+		i <- i + 1
+	}
+	
+	rectangles <- data.frame(
+		xmin = rect_left+0.5,
+		xmax = rect_left+n_genes+0.5,
+		ymin = -Inf,
+		ymax = +Inf
+	)
+	
+	g <- ggplot(df, aes(Var1, Var2)) + labs(title=chart_name) + geom_point(colour=NA) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(angle = 70, hjust = 1)) + xlab("Cell Type") + ylab("Genes")
+	g + scale_size_continuous(range=c(0,5)) + scale_color_gradient(low = 'blue', high = 'red') + coord_fixed(ratio = 1.8) + geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),fill='grey', alpha=0.3,inherit.aes = FALSE) + geom_point(data = df, aes(x=Var1, y=Var2,color = avg_exp_norm, size = pct_exp), alpha = 1.0)
+	
+	# Save data with given height and width
+	ggsave(file=image_name, width=imaged_width, height=image_height, dpi=image_dpi)
+	
+	return(g)
+	
+}
+
+# ----------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
