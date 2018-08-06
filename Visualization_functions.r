@@ -7,6 +7,9 @@
 if (!require("plotly")) {install.packages("plotly"); require(plotly)}
 library(plotly)
 
+if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
+library(Seurat)
+
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 
 # ----------------------------------------------------------------------------------------------
@@ -19,7 +22,8 @@ source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 # the cluster names as well. However, the cluster names are added after reordering, so add cluster names in
 # the final order.
 
-square_heatmap <- function(dataset, genes = c(), cluster_order, cluster_names) {
+square_heatmap <- function(dataset, genes = c(), cluster_order, cluster_names,
+						xaxis_font_size = 15, yaxis_font_size = 15) {
 
 	# We first get the average expression for each of the genes in gene list.
 	avg_exp <- AverageExpression(dataset, genes.use = genes, show.progress = F)
@@ -44,10 +48,9 @@ square_heatmap <- function(dataset, genes = c(), cluster_order, cluster_names) {
 		x=colnames(avg_exp_norm),
 		y=row.names(avg_exp_norm),
 		z = avg_exp_norm,
-		type = "heatmap", showscale = T) 
-		#%>%
-		#layout(
-		#	xaxis = list(
+		type = "heatmap", showscale = T) %>%
+		layout(xaxis = list(tickfont = list(size = xaxis_font_size)), 
+        yaxis = list(tickfont = list(size = yaxis_font_size)))
 	
 	return(p)
 }
@@ -61,9 +64,9 @@ square_heatmap <- function(dataset, genes = c(), cluster_order, cluster_names) {
 
 # Inputs: dataset, differential markers for each cluster in dataset.
 
-heatmap_w_circles <- function(dataset, diff_markers, image_name = "image.png", image_dpi = 300, 
-								imaged_width = 30, image_height = 5, n_genes = 10, cluster_names, 
-								cluster_order, chart_name = "Percent and Normalized Expression") {
+circle_heatmap <- function(dataset, diff_markers, image_name = "image.png", image_dpi = 600, 
+								image_width = 30, image_height = 5, n_genes = 10, cluster_names, 
+								cluster_order, chart_name = "") {
 		
 	# First, we figure out the top n_genes expressed in each cluster.
 	top_genes <- diff_genes_per_cluster(diff_markers, n_genes = n_genes)
@@ -136,7 +139,7 @@ heatmap_w_circles <- function(dataset, diff_markers, image_name = "image.png", i
 	g + scale_size_continuous(range=c(0,5)) + scale_color_gradient(low = 'blue', high = 'red') + coord_fixed(ratio = 1.8) + geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),fill='grey', alpha=0.3,inherit.aes = FALSE) + geom_point(data = df, aes(x=Var1, y=Var2,color = avg_exp_norm, size = pct_exp), alpha = 1.0)
 	
 	# Save data with given height and width
-	ggsave(file=image_name, width=imaged_width, height=image_height, dpi=image_dpi)
+	ggsave(file=image_name, width=image_width, height=image_height, dpi=image_dpi)
 	
 	return(g)
 	
@@ -144,23 +147,73 @@ heatmap_w_circles <- function(dataset, diff_markers, image_name = "image.png", i
 
 # ----------------------------------------------------------------------------------------------
 
+# This function creates a heatmap with circles, in which the circle size depicts ratio of cells in cluster
+# expressing that gene, and the color is a normalized expression of that gene.
 
+# USE UNLABELED DATASET WITH THIS FUNCTION
 
+# Inputs: dataset, genelist for which we want to draw the heatmap for.
 
+circle_heatmap_genelist <- function(dataset, gene_list = "",image_name = "image.png", image_dpi = 600, 
+								image_width = 30, image_height = 5, reorder_cluster = F, cluster_order = "", 
+								rename_cluster = F, cluster_names = "", chart_name = "") {
+		
+	# We extract the average gene expression of each cluster from the dataset and
+	# set it up in a new dataframe with the clusters as columns and genes as the rows.
+	avg_exp_norm <- Average_gene_exp_per_cluster(dataset = dataset, gene_list = gene_list, 
+						reorder_cluster = reorder_cluster, cluster_order = cluster_order, normalize = T,
+						rename_cluster = rename_cluster, cluster_names = cluster_names)
+	
+	# Next we extract the percentage of cells expressing each of the genes in each cluster
+	pct_exp <- pct_exp_per_cluster(dataset = dataset, gene_list = gene_list,
+					reorder_cluster = reorder_cluster, cluster_order = cluster_order, 
+					rename_cluster = rename_cluster, cluster_names = cluster_names)
 
+	#---------------------- Next we begin drawing the heatmap with circles ---------------------
+	
+	# First, we set up the vectors (x & y labels)
+	cell_type <- c(colnames(pct_exp))
+	genes <- c(rownames(pct_exp))
+	
+	# Create the data frame (add pct_exp & avg_exp_norm to the dataframe)
+	df <- expand.grid(genes, cell_type)
+	per_expression <-  vector(mode="double", length=0)
+	for (item in pct_exp){
+		per_expression <- c(per_expression, item)
+	}
+	df$pct_exp <- per_expression
 
+	avg_expression <-  vector(mode="double", length=0)
+	for (item in avg_exp_norm){
+		avg_expression <- c(avg_expression, item)
+	}
+	df$avg_exp_norm <- avg_expression
+	
+	#Setting up background (set color interval for every 1 gene)
+	rect_left <- vector(mode="integer", length=0)
+	x_pos = 1
+	i <- 1
+	while (i <= (length(cell_type)/2)){
+		rect_left <- c(rect_left, x_pos)
+		x_pos <- x_pos + 2
+		i <- i + 1
+	}
+	
+	rectangles <- data.frame(
+		xmin = rect_left+0.5,
+		xmax = rect_left+0.5,
+		ymin = -Inf,
+		ymax = +Inf
+	)
+	
+	g <- ggplot(df, aes(Var1, Var2)) + labs(title=chart_name) + geom_point(colour=NA) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(angle = 70, hjust = 1)) + xlab("Cell Type") + ylab("Genes")
+	g + scale_size_continuous(range=c(0,5)) + scale_color_gradient(low = 'blue', high = 'red') + coord_fixed(ratio = 1.8) + geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),fill='grey', alpha=0.3,inherit.aes = FALSE) + geom_point(data = df, aes(x=Var1, y=Var2,color = avg_exp_norm, size = pct_exp), alpha = 1.0)
+	
+	# Save data with given height and width
+	ggsave(file=image_name, width=image_width, height=image_height, dpi=image_dpi)
+	
+	return(g)
+	
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# ----------------------------------------------------------------------------------------------

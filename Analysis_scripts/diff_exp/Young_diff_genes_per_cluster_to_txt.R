@@ -12,12 +12,12 @@ library(Seurat)
 
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
 
-# First, we load the differentially expressed genes in each cluster.
+# Next, we load the differentially expressed genes in each cluster.
 young_diff_markers <- readRDS("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_diff_markers.rds"))
 
 # Next, we determine the differentially expressed genes for each cluster using the
 # following function.
 
-diff_genes_per_cluster_txt(dataset_name = "young", diff_genes = young_diff_markers ,output_dir = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/Age_Enrichment_Analysis/")
+diff_genes_per_cluster_txt(dataset_name = "young", diff_genes = young_diff_markers ,output_dir = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/Young_Enrichment_Analysis/_Enrichment_Analysis/")
 
 # ----------------------------------------------------------------------------------

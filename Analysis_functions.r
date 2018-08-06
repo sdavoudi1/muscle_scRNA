@@ -2,6 +2,16 @@
 # source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 
 # This file contains the functions used in the various scripts.
+# List of functions:
+# 	-Seurat_from_10Xfile
+# 	-normalize_scale_fvg
+#   -Average_gene_exp_per_cluster
+#	-pct_exp_per_cluster
+# 	-pct.above
+# 	-gene_per_cluster_exp_pct
+# 	-diff_genes_per_cluster_txt
+# 	-diff_genes_per_cluster
+# 	-runGprofiler
 
 #-----------------------------------------------------------------------------------------------------
 
@@ -49,6 +59,82 @@ normalize_scale_fvg <- function(datasample) {
 		
 	# Next we return the Seurat object
 	return(datasample)
+}
+
+#-----------------------------------------------------------------------------------------------------
+
+# This function takes a gene list and returns the average expression of that gene in each cluster.
+# It can also normalize the average expression between 0 and 1
+# It can also rename and reorder the list
+
+# CLUSTER_ORDER needs to be actual column numbers, not cluster numbers, i.e., cluster 0 should be renamed to cluster 1
+# and so forth
+
+Average_gene_exp_per_cluster <- function(dataset, gene_list, reorder_cluster = F ,cluster_order = "", 
+										 normalize = F, rename_cluster = F, cluster_names) {
+
+	df <- data.frame()
+	df <- rbind(df, AverageExpression(dataset, genes.use = gene_list, show.progress = F))
+	
+	# We reorder the cluster if it is required
+	if (reorder_cluster == T) {
+		if (length(cluster_order) > 0) {
+			df <- df[cluster_order]
+		}
+	}
+	
+	# We normalize the dataframe by row if necessary
+	if (normalize == T) {
+		df <- data.frame(t(apply(df, 1, function(x)(x)/(max(x)))))
+	}
+	
+	# We rename the clusters if wanted
+	if (rename_cluster == T) {
+		if (length(cluster_names) > 0) {
+			names(df) <- cluster_names
+		}
+	}
+	
+	return(df)
+
+}
+
+# -----------------------------------------------------------------------------------------------------
+
+# This function takes a gene list and returns the average detection rate for the genes in that list
+# in each of the clusters. 
+
+# It can rename and reorder the clusters if needed as well.
+
+# CLUSTER_ORDER needs to be actual column numbers, not cluster numbers, i.e., cluster 0 should be renamed to cluster 1
+# and so forth
+
+pct_exp_per_cluster <- function(dataset, gene_list, reorder_cluster = F, cluster_order = "",
+								rename_cluster = F, cluster_names) {
+
+	# First we get the average detection rate of all the genes for all the clusters.
+	pct_exp_all <- AverageDetectionRate(dataset)
+	
+	# next we extract the expression for the genes of interest.
+	df <- data.frame()
+	df <- rbind(df, pct_exp_all[gene_list,])
+	
+	# We reorder the cluster if it is required
+	if (reorder_cluster == T) {
+		if (length(cluster_order) > 0) {
+			df <- df[cluster_order]
+		}
+	}
+	
+	# We rename the clusters if wanted
+	if (rename_cluster == T) {
+		if (length(cluster_names) > 0) {
+			names(df) <- cluster_names
+		}
+	}
+	
+	return(df)
+								
 }
 
 # -----------------------------------------------------------------------------------------------------
@@ -138,12 +224,12 @@ diff_genes_per_cluster <- function(dataset, n_genes = 10) {
 # This function generates gprofiler enrichment data. 
 # THIS FUNCTION DOESNT WORK PROPERLY YET. ONCE INPUT INTO CYTOSCAPE, IT GIVES ERRORS.
 
-if(!require(gProfileR)) {
-	install.packages("gProfileR"); require(gProfileR)}
-library(gProfileR)
-
 runGprofiler <- function(genes, current_organism = "mmusculus", set_size_max = 500, set_size_min = 3, filter_min_overlap_size = 5 , exclude_iea = T, query_ordered = F){
-  
+	
+	if(!require(gProfileR)) {
+	install.packages("gProfileR"); require(gProfileR)}
+	library(gProfileR)
+	
     # Run gprofiler
     gprofiler_results <- gprofiler(query = genes ,organism = current_organism, ordered_query = query_ordered, significant = T,
 								exclude_iea = exclude_iea, max_p_value = 1, min_set_size = set_size_min, max_set_size = set_size_max,
@@ -172,38 +258,38 @@ runGprofiler <- function(genes, current_organism = "mmusculus", set_size_max = 5
 
 # THIS FUNCTION DOES NOT WORK. NEEDS FIXING.
 
-if(!require(RCy3)) {
-	source("https://bioconductor.org/biocLite.R")
-	biocLite("RCy3"); require(RCy3)}
-library(RCy3)
+# if(!require(RCy3)) {
+	# source("https://bioconductor.org/biocLite.R")
+	# biocLite("RCy3"); require(RCy3)}
+# library(RCy3)
 
-create_em <- function(pvalue_threshold = 0.01, qvalue_threshold = 0.01, similarity_metric = "COMBINED",
-                      similarity_threshold = 0.375, results_filename, model_name, gmt_file){
+# create_em <- function(pvalue_threshold = 0.01, qvalue_threshold = 0.01, similarity_metric = "COMBINED",
+                      # similarity_threshold = 0.375, results_filename, model_name, gmt_file){
   
-    current_network_name <- paste(model_name,pvalue_threshold,qvalue_threshold,sep="_")
+    # current_network_name <- paste(model_name,pvalue_threshold,qvalue_threshold,sep="_")
   
-    em_command = paste('enrichmentmap build analysisType="generic" ', "gmtFile=",gmt_file,
-                     'pvalue=',pvalue_threshold, 'qvalue=',qvalue_threshold,
-                     'similaritycutoff=',similarity_threshold,
-                     'coefficients=',similarity_metric,
-                     'enrichmentsDataset1=',results_filename,
-                     sep=" ")
+    # em_command = paste('enrichmentmap build analysisType="generic" ', "gmtFile=",gmt_file,
+                     # 'pvalue=',pvalue_threshold, 'qvalue=',qvalue_threshold,
+                     # 'similaritycutoff=',similarity_threshold,
+                     # 'coefficients=',similarity_metric,
+                     # 'enrichmentsDataset1=',results_filename,
+                     # sep=" ")
   
-    #enrichment map command will return the suid of newly created network.
-    response <- commandsGET(em_command)
+    # #enrichment map command will return the suid of newly created network.
+    # response <- commandsGET(em_command)
   
-    current_network_suid <- 0
+    # current_network_suid <- 0
   
-    #enrichment map command will return the suid of newly created network unless it Failed.  If it failed it will contain the word failed
-    if(grepl(pattern="Failed", response)){
-      paste(response)
-    } else {
-      current_network_suid <- response
-    }
+    # #enrichment map command will return the suid of newly created network unless it Failed.  If it failed it will contain the word failed
+    # if(grepl(pattern="Failed", response)){
+      # paste(response)
+    # } else {
+      # current_network_suid <- response
+    # }
   
-    response <- renameNetwork(current_network_name, network = as.numeric(current_network_suid))
+    # response <- renameNetwork(current_network_name, network = as.numeric(current_network_suid))
   
-    return(current_network_suid);
+    # return(current_network_suid);
   
-}
+# }
 
