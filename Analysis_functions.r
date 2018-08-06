@@ -192,7 +192,7 @@ diff_genes_per_cluster_txt <- function(dataset_name, dataset, output_dir = "") {
 	
 	for (i in 1:length(unique(dataset$cluster))) {
 	
-		# Next we run gprofiler analysis on the select gene list and save the results as a text file.
+		# Next save the differentially expressed genes of each cluster in a text file.
 		write.table(dataset$gene[which(dataset$cluster == i-1)], file = paste(paste(output_dir, paste(dataset_name,"cluster", sep="_"), sep = ""), i-1, "diff_gene_list.txt", sep = "_"), sep = "\t",row.names = F, col.names = F, quote = F)
 	}
 	
