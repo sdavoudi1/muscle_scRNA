@@ -13,7 +13,7 @@ library(Seurat)
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.R")
 
 # Next, we load the differentially expressed genes in each cluster.
-young_diff_markers <- readRDS("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_diff_markers.rds"))
+young_diff_markers <- readRDS("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_diff_markers.rds")
 
 # Next, we determine the differentially expressed genes for each cluster using the
 # following function.
