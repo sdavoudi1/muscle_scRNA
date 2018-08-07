@@ -15,13 +15,27 @@
 
 #-----------------------------------------------------------------------------------------------------
 
+# First we load the required libraries.
+
+if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
+	library(Seurat)
+
+if(!require(dplyr)) {install.packages("dplyr"); require(dplyr)}
+library(dplyr)
+
+if(!require(tidyr)) {install.packages("tidyr"); require(tidyr)}
+library(tidyr)
+
+
+#-----------------------------------------------------------------------------------------------------
+
+# This function requires the Seurat library.
+
 # This function reads imported RNA Seq data and returns a Seurat object created from the data
 
 Seurat_from_10Xfile <- function(object, min_cells = 1, min_genes = 200, max_genes = 5000, max_nUMI = 20000, max_percent_mito = 0.25) {
 	
-	# Make sure packages exist
-	if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
-	library(Seurat)
+
 	
 	# Create Seurat object and filter out the data
 	datasample <- CreateSeuratObject(raw.data = object, min.cells = min_cells, min.genes = min_genes)
@@ -45,11 +59,9 @@ Seurat_from_10Xfile <- function(object, min_cells = 1, min_genes = 200, max_gene
 # normalization, scaling, and finding variable genes steps. The input is a Seurat object that we want
 # to work on.
 
-normalize_scale_fvg <- function(datasample) {
+# This function requires the Seurat library.
 
-	# Make sure packages exist
-	if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
-	library(Seurat)
+normalize_scale_fvg <- function(datasample) {
 
 	datasample <- NormalizeData(object = datasample, normalization.method = "LogNormalize", scale.factor = 10000)
 	datasample <- ScaleData(object = datasample, vars.to.regress = c("nUMI"))
@@ -150,15 +162,9 @@ pct.above <- function(x, threshold) {
 # This function takes the Seurat object and a gene list, and determines the average expression and the
 # percentage of the cells expressing the genes on the list for each cluster of cells.
 
+# This function requires the dplyr and tidyr packages.
+
 gene_per_cluster_exp_pct <- function(object, gene.list) {
-
-	if(!require(dplyr)) {
-		install.packages("dplyr"); require(dplyr)}
-	library(dplyr)
-
-	if(!require(tidyr)) {
-		install.packages("tidyr"); require(tidyr)}
-	library(tidyr)
 
 	# first we extract the information regarding the genes of interest from the Seurat object and store
 	# it in a dataframe. Next we create 2 new categories: the cell identifier, and cluster.
