@@ -71,4 +71,4 @@ Endothelial_cells <- RunTSNE(object = Endothelial_cells, dims.use = 1:11, do.fas
 TSNEPlot(object = Endothelial_cells)
 
 # To save the results, we use the following code:
-saveRDS(Endothelial_cells, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/subclusters/Endothelial_cells.rds")
+saveRDS(Endothelial_cells, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/subclusters/Endothelial_cells_reclustering.rds")

@@ -72,4 +72,4 @@ FAP_cells <- RunTSNE(object = FAP_cells, dims.use = 1:20, do.fast = TRUE)
 TSNEPlot(object = FAP_cells)
 
 # To save the results, we use the following code:
-saveRDS(FAP_cells, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/subclusters/FAP_cells.rds")
+saveRDS(FAP_cells, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/subclusters/FAP_cells_reclustering.rds")
