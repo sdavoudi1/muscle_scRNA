@@ -29,3 +29,14 @@ circle_heatmap_young_noimmune_Schwann_top10 <- circle_heatmap_genelist(dataset =
 											image_name = "image.png", image_dpi = 600, image_width = 5,
 											image_height = 5, reorder_cluster = T, cluster_order = cluster_order, 
 											rename_cluster = T, cluster_names = cluster_names)
+											
+# -----------------------------------------------------------------------------------------------------
+
+# this section looks at the genes that Dr. Miller has transgenic mice for
+# and are Schwann cell related
+
+gene_list <- c("Cadm4", "Sox2", "Dhh", "Cadm3")
+circle_heatmap_genelist(dataset = young_noimmune, gene_list = gene_list,
+                        image_name = "Schwann cell identifiers.png", image_dpi = 600, image_width = 5,
+						image_height = 5, reorder_cluster = T, cluster_order = cluster_order, 
+                        rename_cluster = T, cluster_names = cluster_names)

@@ -32,7 +32,7 @@ muscle_noimmune.combined <- RunCCA(young_noimmune, aged_noimmune, genes.use = ge
 # a measure of correlation strength for each CC and find that this statistic generally staurates after a
 # reasonable number of CCs.
 # For us it seems to be ~20.
-p1 <- MetageneBicorPlot(muscle_noimmune.combined, grouping.var = "group", dims.eval = 1:30, display.progress = FALSE)
+# p1 <- MetageneBicorPlot(muscle_noimmune.combined, grouping.var = "group", dims.eval = 1:30, display.progress = FALSE)
 
 # Next we align the CCA subspaces so we can use them for clustering.
 muscle_noimmune.combined <- AlignSubspace(muscle_noimmune.combined, reduction.type = "cca", grouping.var = "group", dims.align = 1:20)

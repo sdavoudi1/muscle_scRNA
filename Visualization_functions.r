@@ -2,6 +2,14 @@
 # scRNA Seq project.
 # source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Visualization_functions.r")
 
+# This file contains the functions used in the various scripts.
+# List of functions:
+# 	-square_heatmap
+# 	-circle_heatmap
+#   -circle_heatmap_genelist
+#	-circle_heatmap_genelist_spec_cluster
+
+
 # ----------------------------------------------------------------------------------------------
 
 if (!require("plotly")) {install.packages("plotly"); require(plotly)}
@@ -9,6 +17,9 @@ library(plotly)
 
 if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
 library(Seurat)
+
+if(!require(dplyr)) {install.packages("dplyr"); require(dplyr)}
+library(dplyr)
 
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 
@@ -141,8 +152,6 @@ circle_heatmap <- function(dataset, diff_markers, image_name = "image.png", imag
 	# Save data with given height and width
 	ggsave(file=image_name, width=image_width, height=image_height, dpi=image_dpi)
 	
-	return(g)
-	
 }
 
 # ----------------------------------------------------------------------------------------------
@@ -212,8 +221,87 @@ circle_heatmap_genelist <- function(dataset, gene_list = "",image_name = "image.
 	# Save data with given height and width
 	ggsave(file=image_name, width=image_width, height=image_height, dpi=image_dpi)
 	
-	return(g)
-	
 }
 
 # ----------------------------------------------------------------------------------------------
+
+# This function takes a gene list, and cluster numbers and returns the circle heatmap for that gene list
+# and those numbers.
+
+# The clusters have to be adjusted to start from 1, not from 0.
+
+circle_heatmap_genelist_spec_cluster <- function(dataset, gene_list = "", n_genes = 10,
+								clusters = c(), rename_cluster = F, cluster_names = "",
+								image_dpi = 600, image_width = 10, image_height = 5,chart_name = "",
+								image_name = "image.png"){
+	if (length(clusters) > 0) {
+		
+		# We extract the average gene expression of each cluster from the dataset and
+		# set it up in a new dataframe with the clusters as columns and genes as the rows.
+		avg_exp_norm <- Average_gene_exp_per_cluster(dataset = dataset, gene_list = gene_list, 
+							normalize = T)
+		avg_exp_norm <- avg_exp_norm[,clusters]	
+		if (rename_cluster == T) {
+			if (length(cluster_names) > 0) {
+				names(avg_exp_norm) <- cluster_names
+			}
+		}
+		
+		# Next we extract the percentage of cells expressing each of the genes in each cluster
+		pct_exp <- pct_exp_per_cluster(dataset = dataset, gene_list = gene_list)
+		pct_exp <- pct_exp[,clusters]
+		if (rename_cluster == T) {
+			if (length(cluster_names) > 0) {
+				names(pct_exp) <- cluster_names
+			}
+		}
+		
+
+		#---------------------- Next we begin drawing the heatmap with circles ---------------------
+		
+		# First, we set up the vectors (x & y labels)
+		cell_type <- c(colnames(pct_exp))
+		genes <- c(rownames(pct_exp))
+		
+		# Create the data frame (add pct_exp & avg_exp_norm to the dataframe)
+		df <- expand.grid(genes, cell_type)
+		per_expression <-  vector(mode="double", length=0)
+		for (item in pct_exp){
+			per_expression <- c(per_expression, item)
+		}
+		df$pct_exp <- per_expression
+
+		avg_expression <-  vector(mode="double", length=0)
+		for (item in avg_exp_norm){
+			avg_expression <- c(avg_expression, item)
+		}
+		df$avg_exp_norm <- avg_expression
+		
+		
+		#Setting up background (set color interval for every n_genes)
+		rect_left <- vector(mode="integer", length=0)
+		x_pos = n_genes
+		i <- 1
+		while (i <= (length(cell_type)/2)){
+			rect_left <- c(rect_left, x_pos)
+			x_pos <- x_pos + 2*n_genes
+			i <- i + 1
+		}
+		
+		rectangles <- data.frame(
+			xmin = rect_left+0.5,
+			xmax = rect_left+n_genes+0.5,
+			ymin = -Inf,
+			ymax = +Inf
+		)	
+				
+		g <- ggplot(df, aes(Var1, Var2)) + labs(title=chart_name) + geom_point(colour=NA) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(angle = 70, hjust = 1)) + xlab("Cell Type") + ylab("Genes")
+		g + scale_size_continuous(range=c(0,5)) + scale_color_gradient(low = 'blue', high = 'red') + coord_fixed(ratio = 1.8) + geom_rect(data=rectangles, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),fill='grey', alpha=0.3,inherit.aes = FALSE) + geom_point(data = df, aes(x=Var1, y=Var2,color = avg_exp_norm, size = pct_exp), alpha = 1.0)
+		
+		# Save data with given height and width
+		ggsave(file=image_name, width=image_width, height=image_height, dpi=image_dpi)
+	}
+	else {
+		cat("No clusters selected")
+	}	
+}
