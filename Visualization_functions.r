@@ -21,7 +21,17 @@ library(Seurat)
 if(!require(dplyr)) {install.packages("dplyr"); require(dplyr)}
 library(dplyr)
 
+if (!require("igraph")) install.packages("igraph")
+library(igraph)
+ 
+if (!require("RColorBrewer")) install.packages("RColorBrewer")
+library(RColorBrewer)
+ 
+if (!require("colorspace")) install.packages("colorspace")
+library(colorspace)
+
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
+source("C:/users/sadeg/Google Drive/scRNA/muscle_scRNA/General_visualization_functions.r")
 
 # ----------------------------------------------------------------------------------------------
 
@@ -304,4 +314,50 @@ circle_heatmap_genelist_spec_cluster <- function(dataset, gene_list = "", n_gene
 	else {
 		cat("No clusters selected")
 	}	
+}
+
+# ----------------------------------------------------------------------------------------------
+
+# This function takes a dataframe version of the network data, converts it into a adjacency matrix
+# and then creates a circular network graph.
+
+igraph_circle_network_full <- function(x, dir_mode = "directed") {
+
+	# Import desire data file and make it a matrix
+	xm <- as.matrix(x)
+
+	# Create adjacency matrix (directed, weighted), and edge for the network
+	gm <- graph.adjacency(xm, mode = dir_mode, weighted = TRUE, diag = TRUE)
+
+	# Set circular layout
+	layout <- layout.circle(gm)
+
+	# We next set the edge weights to max 5.
+	edge_width <- 5*E(gm)$weight/max(E(gm)$weight)
+
+	# Next we setup our color palette
+	cols <- brewer.pal(12, name = "Set3")
+	cols <- readhex(file = textConnection(paste(cols, collapse = "\n")), class = "RGB")
+	cols <- as(cols, "HLS")
+	cols@coords[, "L"] <- cols@coords[, "L"] * 0.85
+	cols <- as(cols, "RGB")
+	cols <- hex(cols)
+	cols_order <- c(1,3,4,5,6,7,8,9,10,2,11,12)
+	cols <- cols[cols_order]
+
+	# Next we set the vertices and edge colors
+	#colr <- c("red", "orange", "cyan","green", "blue", "purple","gray40", "brown", "violet")
+	V(gm)$color <- cols[V(gm)]
+	V(gm)$size <- 23
+	V(gm)$label.color <- "black"
+	edge.start <- ends(gm, es=E(gm), names=F)[,1]
+	edge.col <- V(gm)$color[edge.start]
+
+	# Next, we plot the results
+	curves <- autocurve.edges2(gm)
+	plot.igraph(gm, layout = layout, 
+			    edge.width = edge_width, edge.arrow.size = 0,
+			    edge.color = edge.col, edge.curved = curves, 
+			    vertex.label = V(gm)$name)
+  
 }

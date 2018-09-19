@@ -13,6 +13,8 @@ load("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/interactome_v3/_inx.RDat
 age <- "young"
 connection_list <- names(inx[[age]])
 
+# ----------------------------------------------------------------------------------
+
 # We want to create 2 dataframes, one in which the direction of the interaction
 # is important, i.e. "0 -> 1", is not the same as "1 -> 0", and the other on in which
 # the directin is not important. At the same time, we want to save the results
@@ -33,8 +35,8 @@ for (i in 1:length(connection_list)) {
 	comp <- connection_list[i]
 	
 	# First, we find node names of genes detected in > 20% of cells in the cluster
-	DRnodes <- inxNode[[age]][[comp]]$node[inxNode[[age]][[comp]]$detectRate > 0.2]
-	# Ligand-receptor interactions where both genes were detected in > 20% of cells
+	DRnodes <- inxNode[[age]][[comp]]$node[inxNode[[age]][[comp]]$detectRate > 0.25]
+	# Ligand-receptor interactions where both genes were detected in > 25% of cells
 	# in the cluster.
 	interact_subset <- inx[[age]][[comp]][inx[[age]][[comp]]$nodeA %in% DRnodes & 
 						inx[[age]][[comp]]$nodeB %in% DRnodes & 
@@ -63,3 +65,10 @@ for (i in 1:length(connection_list)) {
 
 save(interactome_dir, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/interactome/young_interactome_dir.rdata")
 save(interactome_no_dir, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/interactome/young_interactome_no_dir.rdata")
+
+# ----------------------------------------------------------------------------------
+
+
+
+# Next, we want to put together the entire dataset.
+
