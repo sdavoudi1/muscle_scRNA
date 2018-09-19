@@ -67,8 +67,3 @@ save(interactome_dir, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/
 save(interactome_no_dir, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/interactome/young_interactome_no_dir.rdata")
 
 # ----------------------------------------------------------------------------------
-
-
-
-# Next, we want to put together the entire dataset.
-

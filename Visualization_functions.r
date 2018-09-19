@@ -321,7 +321,9 @@ circle_heatmap_genelist_spec_cluster <- function(dataset, gene_list = "", n_gene
 # This function takes a dataframe version of the network data, converts it into a adjacency matrix
 # and then creates a circular network graph.
 
-igraph_circle_network_full <- function(x, dir_mode = "directed") {
+igraph_circle_network_full <- function(x, dir_mode = "directed", show_plot = T,
+									   width_multiplier = 7.5, start_curve = 0.1,
+									   save_pdf = F, plot_name = "test.pdf") {
 
 	# Import desire data file and make it a matrix
 	xm <- as.matrix(x)
@@ -333,7 +335,7 @@ igraph_circle_network_full <- function(x, dir_mode = "directed") {
 	layout <- layout.circle(gm)
 
 	# We next set the edge weights to max 5.
-	edge_width <- 5*E(gm)$weight/max(E(gm)$weight)
+	edge_width <- width_multiplier*E(gm)$weight/max(E(gm)$weight)
 
 	# Next we setup our color palette
 	cols <- brewer.pal(12, name = "Set3")
@@ -352,12 +354,31 @@ igraph_circle_network_full <- function(x, dir_mode = "directed") {
 	V(gm)$label.color <- "black"
 	edge.start <- ends(gm, es=E(gm), names=F)[,1]
 	edge.col <- V(gm)$color[edge.start]
+	
+	# Next, we derive the angles for the auto-vertices
+	n_v <- length(V(gm))
+	loop_angle <- numeric(n_v*n_v)
+	a <- 1
+	for (i in 1:n_v) {
+		loop_angle[a] <- (2*pi)*(1 - ((i-1)/n_v))
+		a <- a + (n_v + 1)
+	}
 
 	# Next, we plot the results
-	curves <- autocurve.edges2(gm)
-	plot.igraph(gm, layout = layout, 
-			    edge.width = edge_width, edge.arrow.size = 0,
-			    edge.color = edge.col, edge.curved = curves, 
-			    vertex.label = V(gm)$name)
-  
+	curves <- autocurve.edges2(gm, start = start_curve)
+	
+	if (save_pdf == T) {
+		pdf(plot_name, 10, 10)
+		plot(gm, layout = layout, 
+			edge.width = edge_width, edge.arrow.size = 0,
+			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle, 
+			vertex.label = V(gm)$name, margin = 0.5)
+		dev.off()
+	}
+	if (show_plot == T) {
+		plot(gm, layout = layout, 
+			edge.width = edge_width, edge.arrow.size = 0,
+			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle, 
+			vertex.label = V(gm)$name, margin = 0.5)
+	}
 }
