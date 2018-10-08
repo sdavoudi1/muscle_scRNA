@@ -323,6 +323,7 @@ circle_heatmap_genelist_spec_cluster <- function(dataset, gene_list = "", n_gene
 
 igraph_circle_network_full <- function(x, dir_mode = "directed", show_plot = T,
 									   width_multiplier = 7.5, start_curve = 0.1,
+									   label_v = T,
 									   save_pdf = F, plot_name = "test.pdf") {
 
 	# Import desire data file and make it a matrix
@@ -355,6 +356,14 @@ igraph_circle_network_full <- function(x, dir_mode = "directed", show_plot = T,
 	edge.start <- ends(gm, es=E(gm), names=F)[,1]
 	edge.col <- V(gm)$color[edge.start]
 	
+	# We also choose to show or omit the vertex labels
+	if (label_v == T) {
+		vertex_labels <- V(gm)$name
+	}
+	if (label_v == F) {
+		vertex_labels <- NA
+	}
+	
 	# Next, we derive the angles for the auto-vertices
 	n_v <- length(V(gm))
 	loop_angle <- numeric(n_v*n_v)
@@ -371,14 +380,15 @@ igraph_circle_network_full <- function(x, dir_mode = "directed", show_plot = T,
 		pdf(plot_name, 10, 10)
 		plot(gm, layout = layout, 
 			edge.width = edge_width, edge.arrow.size = 0,
-			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle, 
-			vertex.label = V(gm)$name, margin = 0.5)
+			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle,
+			label = label_v,
+			vertex.label = vertex_labels, margin = 0.5)
 		dev.off()
 	}
 	if (show_plot == T) {
 		plot(gm, layout = layout, 
 			edge.width = edge_width, edge.arrow.size = 0,
 			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle, 
-			vertex.label = V(gm)$name, margin = 0.5)
+			vertex.label = vertex_labels, margin = 0.5)
 	}
 }

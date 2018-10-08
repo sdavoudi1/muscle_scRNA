@@ -49,13 +49,18 @@ plot_grid(p1, p2)
 # Next we save the results
 saveRDS(muscle_noimmune.combined, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/muscle_noimmune_combined.rds")
 
+# -----------------------------------------------------------------------------------------------------
 # Next we look at the expression of certain markers for each cluster to determine their identity.
 # FeaturePlot(object = muscle.combined, features.plot = c("Pax7", "Myod1", "Des", "Cd34", "Ly6a", "Pdgfra", "Pecam1", "Plp1", "Tnmd"),min.cutoff = "q9", cols.use = c("lightgrey", "blue"), pt.size = 0.5)
+
+# -----------------------------------------------------------------------------------------------------
 
 # # To plot the tSNE plots of the young and aged side by side use the following snippet of code
 # p1 <- TSNEPlot(muscle.combined, do.return = T, pt.size = 0.5, cells.use = muscle.combined@cell.names[1:length(which(muscle.combined@meta.data$orig.ident == "young"))]
 # p2 <- TSNEPlot(muscle.combined, do.return = T, pt.size = 0.5, cells.use = muscle.combined@cell.names[length(which(muscle.combined@meta.data$orig.ident == "young"))+1:length(muscle.combined@cell.names)])
 # plot_grid(p1,p2)
+
+# -----------------------------------------------------------------------------------------------------
 
 # To rename the clusters to what they are:
 # new.ident <- c("Myo", "FAP_1", "EC_1", "MuSC", "FAP_2", "EC_2", "FAP_3", "Tenocyte", "FAP_4", "Schwann")
@@ -63,3 +68,5 @@ saveRDS(muscle_noimmune.combined, file = "C:/Users/sadeg/Google Drive/scRNA/data
 	# muscle_noimmune.combined <- RenameIdent(object = muscle_noimmune.combined, old.ident.name = i, new.ident.name = new.ident[i+1])
 # }
 # saveRDS(muscle_noimmune.combined, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/muscle_noimmune_combined_labeled.rds")
+
+# -----------------------------------------------------------------------------------------------------
