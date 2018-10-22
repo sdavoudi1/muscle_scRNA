@@ -1,5 +1,5 @@
-# MuSC_interactome_change.R
-# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Interactome/MuSC_interactome_change.R")
+# MuSC_autocrine_interactome_change.R
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/Interactome/MuSC_autocrine_interactome_change.R")
 
 # This script analyzes the changes in the MuSC interactome.
 
