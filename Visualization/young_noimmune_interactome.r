@@ -26,13 +26,13 @@ igraph_circle_network_full(interactome_dir2, label_v = F,
 # cluster (columns) vs the signals given by each cluster (rows).
 
 # Signals received
-for (i in 1:9) {
-	interactome_dir_received <- data.frame(matrix(0, nrow = 9, ncol = 9))
-	interactome_dir_received[,i] <- interactome_dir2[,i]
-	rownames(interactome_dir_received) <- rownames(interactome_dir2)
-	colnames(interactome_dir_received) <- colnames(interactome_dir2)
-	plotname <- paste("C:/Users/sadeg/Google Drive/scRNA/Results/Interactome/young_recipient_interactome_", as.character(i), ".pdf", sep = "")
-	igraph_circle_network_full(interactome_dir_received, label_v = T, 
-							   start_curve = 0, save_pdf = T,
-							   plot_name = plotname)
-}
+# for (i in 1:9) {
+	# interactome_dir_received <- data.frame(matrix(0, nrow = 9, ncol = 9))
+	# interactome_dir_received[,i] <- interactome_dir2[,i]
+	# rownames(interactome_dir_received) <- rownames(interactome_dir2)
+	# colnames(interactome_dir_received) <- colnames(interactome_dir2)
+	# plotname <- paste("C:/Users/sadeg/Google Drive/scRNA/Results/Interactome/young_recipient_interactome_", as.character(i), ".pdf", sep = "")
+	# igraph_circle_network_full(interactome_dir_received, label_v = T, 
+							   # start_curve = 0, save_pdf = T,
+							   # plot_name = plotname)
+# }

@@ -47,8 +47,16 @@ for (i in 1:length(connection_list)) {
 	nodeB <- as.integer(cluster_numbers[[1]][3])
 	
 	# for the no direction interactome numbers:
-	interactome_no_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset)
-	interactome_no_dir[nodeB + 1, nodeA + 1] <- nrow(interact_subset)
+	# for non-autocrine
+	if (nodeA != nodeB) {
+		interactome_no_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset)
+		interactome_no_dir[nodeB + 1, nodeA + 1] <- nrow(interact_subset)
+	}
+	# for autocrine (the reason it is divided by 2 is that it will count the 
+	# interactions twice, once as LtoR and once as RtoL.
+	if (nodeA == nodeB) {
+		interactome_no_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset)/2
+	}
 	
 	# for the directional interactome numbers:
 	# for non-autocrine
@@ -56,9 +64,10 @@ for (i in 1:length(connection_list)) {
 		interactome_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset[interact_subset$direction == "LtoR",])
 		interactome_dir[nodeB + 1, nodeA + 1] <- nrow(interact_subset[interact_subset$direction == "RtoL",])
 	}
-	# for autocrine
+	# for autocrine (the reason it is divided by 2 is that it will count the 
+	# interactions twice, once as LtoR and once as RtoL.
 	if (nodeA == nodeB) {
-		interactome_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset)
+		interactome_dir[nodeA + 1, nodeB + 1] <- nrow(interact_subset)/2
 	}
 	
 }

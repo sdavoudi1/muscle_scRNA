@@ -1,5 +1,5 @@
 # muscle_combined_gene_DE.R
-# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/muscle_combined_gene_DE.R")
+# source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_scripts/aged_young_DE/muscle_combined_gene_DE.R")
 
 
 # This script was used to look at changes in gene expression between the aged
@@ -8,6 +8,9 @@
 
 if (!require("ks")) {install.packages("ks"); require(ks)}
 library(ks)
+
+if(!require(Seurat)) {install.packages("Seurat"); require(Seurat)}
+	library(Seurat)
 
 # We load in the labeled muscle_combined_noimmune data.
 muscle.combined <- readRDS("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/muscle_noimmune_combined_labeled.rds")
