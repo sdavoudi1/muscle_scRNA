@@ -77,3 +77,26 @@ saveRDS(young_noimmune, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_age
 
 # # To save the results, we use the following code:
 # saveRDS(young_noimmune, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_noimmune_labeled.rds")
+
+# ------------------------------------------------------------------------------------------------------
+
+# 2018-11-20 
+# We realized later that the FAP_1 and FAP_3 subpopulations are not necessarily unique. As a result, we 
+# combine them together into a cluster
+
+young_noimmune_v2 <- young_noimmune
+
+current.cluster.ids <- c(0, 1, 2, 3, 4, 5, 6, 7, 8)
+new.cluster.ids <- c(0, 1, 2, 3, 4, 0, 5, 6, 7)
+
+young_noimmune_v2@ident <- plyr::mapvalues(x = young_noimmune_v2@ident, from = current.cluster.ids, to = new.cluster.ids)
+
+saveRDS(young_noimmune_v2, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_noimmune_v2.rds")
+
+# To rename the clusters to what we want:
+current.cluster.ids <- c(0,1,2,3,4,5,6,7)
+new.cluster.ids <- c("FAP_1", "EC_1", "MuSC", "FAP_2", "EC_2", "Tenocyte", "FAP_3", "Schwann")
+young_noimmune_v2@ident <- plyr::mapvalues(x = young_noimmune_v2@ident, from = current.cluster.ids, to = new.cluster.ids)
+
+# To save the results, we use the following code:
+saveRDS(young_noimmune_v2, file = "C:/Users/sadeg/Google Drive/scRNA/data/young_aged/objects/young_noimmune_v2_labeled.rds")

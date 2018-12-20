@@ -8,6 +8,9 @@
 # 	-circle_heatmap
 #   -circle_heatmap_genelist
 #	-circle_heatmap_genelist_spec_cluster
+#	-igraph_circle_network_full
+# 	-igraph_circle_net_lig_to_cluster
+#	-ligand_source_heatmap
 
 
 # ----------------------------------------------------------------------------------------------
@@ -29,6 +32,9 @@ library(RColorBrewer)
  
 if (!require("colorspace")) install.packages("colorspace")
 library(colorspace)
+
+if (!require("xlsx")) install.packages("xlsx")
+library(xlsx)
 
 source("C:/Users/sadeg/Google Drive/scRNA/muscle_scRNA/Analysis_functions.r")
 source("C:/users/sadeg/Google Drive/scRNA/muscle_scRNA/General_visualization_functions.r")
@@ -392,3 +398,173 @@ igraph_circle_network_full <- function(x, dir_mode = "directed", show_plot = T,
 			vertex.label = vertex_labels, margin = 0.5)
 	}
 }
+
+# ----------------------------------------------------------------------------------------------
+
+# This function takes a dataframe version of the network data, converts it into a adjacency matrix
+# and then creates a circular network graph that only shows the ligands presented to each of the clusters.
+
+igraph_circle_net_lig_to_cluster <- function(x, cluster = 2, order = c(1,4,2,0,3,6,5,7) + 1, 
+									   dir_mode = "directed", show_plot = T,
+									   width_multiplier = 7.5, start_curve = 0.1,
+									   label_v = T,
+									   save_pdf = F, plot_name = "test.pdf") {
+									   
+	x <- x[order,]
+	x <- x[,order]
+	cluster_real <- cluster+1
+	x[,order[!(order %in% cluster_real)]] <- 0
+	
+	xm <- as.matrix(x)
+	gm <- graph.adjacency(xm, mode = dir_mode, weighted = TRUE, diag = TRUE)
+	
+	layout <- layout.circle(gm)
+	edge_width <- width_multiplier*E(gm)$weight/max(E(gm)$weight)
+	
+	cols <- brewer.pal(12, name = "Set3")
+	cols <- readhex(file = textConnection(paste(cols, collapse = "\n")), class = "RGB")
+	cols <- as(cols, "HLS")
+	cols@coords[, "L"] <- cols@coords[, "L"] * 0.85
+	cols <- as(cols, "RGB")
+	cols <- hex(cols)
+	cols_order <- c(1,3,4,5,6,7,8,9,10,2,11,12)
+	cols <- cols[cols_order]
+	
+	V(gm)$color <- cols[V(gm)]
+	V(gm)$size <- 23
+	V(gm)$label.color <- "black"
+	edge.start <- ends(gm, es=E(gm), names=F)[,1]
+	edge.col <- V(gm)$color[edge.start]
+	
+	if (label_v == T) {
+		vertex_labels <- V(gm)$name
+	}
+	if (label_v == F) {
+		vertex_labels <- NA
+	}	
+	
+	n_v <- length(V(gm))
+	loop_angle <- numeric(n_v)
+	loop_angle[cluster_real] <- (2*pi)*(1 - ((cluster_real-1)/n_v))
+	
+	curves <- autocurve.edges2(gm, start = start_curve)
+	
+	if (save_pdf == T) {
+		pdf(plot_name, 10, 10)
+		plot(gm, layout = layout, 
+			edge.width = edge_width, edge.arrow.size = 0,
+			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle,
+			label = label_v,
+			vertex.label = vertex_labels, margin = 0.5)
+		dev.off()
+	}
+	if (show_plot == T) {
+		plot(gm, layout = layout, 
+			edge.width = edge_width, edge.arrow.size = 0,
+			edge.color = edge.col, edge.curved = curves, edge.loop.angle = loop_angle, 
+			vertex.label = vertex_labels, margin = 0.5)
+	}
+}
+
+# ----------------------------------------------------------------------------------------------
+
+# This function creates a heatmap with the source of the ligands presented to a specific cluster. 
+# It takes the young seurat object, the receiving interactome dataset for the cluster in mind
+# (using the cluster_interactome_rec_v2 function), the order of the dataset, and cluster of interest 
+# as input.
+
+ligand_source_heatmap <- function(interac, labeled_dataset = "young", 
+								cluster = "MuSC", cluster_order = c("EC_1", "EC_2", "MuSC", "FAP_1", "FAP_2", "FAP_3", "Tenocyte", "Schwann")
+								) {
+
+	# First, we change the names in the interactome dataset columns so they are the cell types instead of numbers
+	if (nrow(interac) > 0) {
+		interac[interac$cellTypeB == 0, "cellTypeB"] <- "FAP_1"
+		interac[interac$cellTypeB == 1, "cellTypeB"] <- "EC_1"
+		interac[interac$cellTypeB == 2, "cellTypeB"] <- "MuSC"
+		interac[interac$cellTypeB == 3, "cellTypeB"] <- "FAP_2"
+		interac[interac$cellTypeB == 4, "cellTypeB"] <- "EC_2"
+		interac[interac$cellTypeB == 5, "cellTypeB"] <- "Tenocyte"
+		interac[interac$cellTypeB == 6, "cellTypeB"] <- "FAP_3"
+		interac[interac$cellTypeB == 7, "cellTypeB"] <- "Schwann"
+
+		interac[interac$cellTypeA == 0, "cellTypeA"] <- "FAP_1"
+		interac[interac$cellTypeA == 1, "cellTypeA"] <- "EC_1"
+		interac[interac$cellTypeA == 2, "cellTypeA"] <- "MuSC"
+		interac[interac$cellTypeA == 3, "cellTypeA"] <- "FAP_2"
+		interac[interac$cellTypeA == 4, "cellTypeA"] <- "EC_2"
+		interac[interac$cellTypeA == 5, "cellTypeA"] <- "Tenocyte"
+		interac[interac$cellTypeA == 6, "cellTypeA"] <- "FAP_3"
+		interac[interac$cellTypeA == 7, "cellTypeA"] <- "Schwann"
+	}
+	
+	# Next we extract the unique ligands presented to the cluster of interest, and determine the average 
+	# expression of each of the clusters for those genes, and reorganize the results in order of our cluster order.
+	ligands <- unique(interac[,1])
+	avg_exp <- AverageExpression(object = labeled_dataset, genes.use = ligands, show.progress = F)
+	
+	if (is.character(cluster_order) == T) {
+		avg_exp <- avg_exp[, cluster_order]
+	}
+	
+	# Next we normalize the values so the cluster with the highest average is set to 1, and identify
+	# which cluster has the highest expression for each of the genes and store it in max_col.
+	avg_exp_norm <- t(apply(avg_exp, 1, function(x)(x)/(max(x))))
+	max_col <- apply(avg_exp_norm, 1, which.max)
+	avg_exp_norm <- data.frame(avg_exp_norm)
+	
+	# Next we create empty temporary datasets to store information in.
+	EC_1 <- data.frame(matrix(ncol = 8, nrow = 0))
+	names(EC_1) <- cluster_order
+	EC_2 <- EC_1
+	MuSC <- EC_1
+	FAP_1 <- EC_1
+	FAP_2 <- EC_1
+	FAP_3 <- EC_1
+	Tenocyte <- EC_1
+	Schwann <- EC_1
+	
+	# Next we assign each ligand normalized expression values, to the dataset_cluster which has
+	# the highest normalized expression value. At the end, we merge them all in the order we want.
+	for (i in (1:nrow(avg_exp_norm))) {
+		if (max_col[i] == 1) {
+			EC_1 <- rbind(EC_1, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 2) {
+			EC_2 <- rbind(EC_2, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 3) {
+			MuSC <- rbind(MuSC, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 4) {
+			FAP_1 <- rbind(FAP_1, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 5) {
+			FAP_2 <- rbind(FAP_2, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 6) {
+			FAP_3 <- rbind(FAP_3, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 7) {
+			Tenocyte <- rbind(Tenocyte, avg_exp_norm[i,])
+		}
+		if (max_col[i] == 8) {
+			Schwann <- rbind(Schwann, avg_exp_norm[i,])
+		}
+	}
+	avg_exp_norm_reorganized <- rbind(EC_1, EC_2, MuSC, FAP_1, FAP_2, FAP_3, Tenocyte, Schwann)
+	avg_exp_norm_reorg_matrix <- t(as.matrix(avg_exp_norm_reorganized))
+	
+	# Finally, we plot the heatmap.
+	xaxis_font_size = 15
+	yaxis_font_size = 15
+	p <- plot_ly(
+			y=rownames(avg_exp_norm_reorg_matrix),
+			x=colnames(avg_exp_norm_reorg_matrix),
+			z = avg_exp_norm_reorg_matrix,
+			type = "heatmap", showscale = T) %>%
+			layout(xaxis = list(tickfont = list(size = xaxis_font_size)), 
+			yaxis = list(tickfont = list(size = yaxis_font_size)))
+	
+	return(p)
+}	

@@ -314,6 +314,90 @@ cluster_interactome_rec <- function(inx = inx, inxNode = inxNode, cluster_id = "
 	return(cluster_interactome_receiving)
 }
 
+# --------------
+# This is for analyzing the data from the v2 dataset where we have 3 FAP populations instead of 1.
+
+cluster_interactome_rec_v2 <- function(inx = inx, inxNode = inxNode, cluster_id = "2", age = "young", data_loaded = T) {
+
+	if (data_loaded != T) {
+		# First we load the data
+		load("C:/Users/sadeg/Google Drive/scRNA/data/young_aged/interactome_v4/_inx.RData")
+	}
+	
+	# First we determine the interactome subsets that we need (interactome of MuSCs)
+	connection_list_all <- names(inx[[age]])
+	connection_subset <- connection_list_all[grepl(cluster_id, connection_list_all)]
+
+	# Next we start going over the connection list 1 by 1 and creating the matrix.
+	# first we create an empty dataframe to add the results to.
+	column_names <- colnames(inx[[age]][[connection_list_all[1]]])
+	cluster_interactome <- data.frame(matrix(ncol = length(column_names), nrow = 0))
+	colnames(cluster_interactome) <- column_names
+	rm(column_names)
+
+	# next we go over all the different interaction matrices that have our
+	# cluster of interest in them and add them to the blank dataframe
+	for (i in connection_subset) {
+	  DRnodes <- inxNode[[age]][[i]]$node[inxNode[[age]][[i]]$DR > 0.2]
+	  age_subset <- inx[[age]][[i]][inx[[age]][[i]]$nodeA %in% DRnodes &
+											 inx[[age]][[i]]$nodeB %in% DRnodes &
+											inx[[age]][[i]]$direction %in% c("LtoR", "RtoL"),]
+	  cluster_interactome <- rbind(cluster_interactome, age_subset)
+	}
+
+	# Next, we clean up the dataframe and take out unwanted parameters
+	drops <- c("key", "nodeA", "nodeB", "proteinTypeA", "proteinTypeB")
+	cluster_interactome <- cluster_interactome[,!names(cluster_interactome) %in% drops]
+
+	# Next, we want to keep only interactions that our cluster is on the receiving side.
+
+	# first we create empty dataframe with the columns we want
+	column_names <- colnames(cluster_interactome)
+	cluster_interactome_receiving <- data.frame(matrix(ncol = length(column_names)+2, nrow = 0))
+	colnames(cluster_interactome_receiving)[1:length(column_names)] <- column_names
+	colnames(cluster_interactome_receiving)[1+length(column_names)] <- "source"
+	colnames(cluster_interactome_receiving)[2+length(column_names)] <- "interaction"
+	rm(column_names)
+
+
+	for (i in 1:nrow(cluster_interactome)) {
+		
+		# for paracrine signaling
+		if (cluster_interactome$cellTypeA[i] != cluster_interactome$cellTypeB[i]) {
+		  if ((cluster_interactome$cellTypeB[i] == cluster_id) & (cluster_interactome$direction[i] == "LtoR")) {
+			temp <- cluster_interactome[i,]
+			temp$source <- paste(temp$cellTypeA, temp$cellTypeB, sep = "~")
+			temp$interaction <- paste(temp$geneA, temp$geneB, sep = "_")
+			cluster_interactome_receiving <- rbind(cluster_interactome_receiving, temp)
+		  }
+		  if ((cluster_interactome$cellTypeA[i] == cluster_id) & (cluster_interactome$direction[i] == "RtoL")) {
+			temp <- cluster_interactome[i,]
+			temp2 <- temp
+			temp$geneA <- temp2$geneB
+			temp$geneB <- temp2$geneA
+			temp$cellTypeA <- temp2$cellTypeB
+			temp$cellTypeB <- temp2$cellTypeA
+			temp$source <- paste(temp2$cellTypeA, temp2$cellTypeB, sep = "~")
+			temp$interaction <- paste(temp$geneA, temp$geneB, sep = "_")
+			cluster_interactome_receiving <- rbind(cluster_interactome_receiving, temp)
+		  }
+		}
+		
+		# For autocrine signalin, to avoid duplicates.
+		if (cluster_interactome$cellTypeA[i] == cluster_interactome$cellTypeB[i]) {
+			if ((cluster_interactome$cellTypeB[i] == cluster_id) & (cluster_interactome$direction[i] == "LtoR")) {
+			temp <- cluster_interactome[i,]
+			temp$source <- paste(temp$cellTypeA, temp$cellTypeB, sep = "~")
+			temp$interaction <- paste(temp$geneA, temp$geneB, sep = "_")
+			cluster_interactome_receiving <- rbind(cluster_interactome_receiving, temp)
+		  }
+		}
+	}
+
+	return(cluster_interactome_receiving)
+}
+
+
 # -----------------------------------------------------------------------------------------------------
 # This function generates gprofiler enrichment data. 
 # THIS FUNCTION DOESNT WORK PROPERLY YET. ONCE INPUT INTO CYTOSCAPE, IT GIVES ERRORS.

@@ -1,4 +1,4 @@
-# young_noimmune_interactome.R
+# young_noimmune_interactome_plot.R
 # source("C:/users/sadeg/Google Drive/scRNA/muscle_scRNA/Visualization/young_noimmune_interactome.R")
 
 # This script creates the young_noimmune interactome network.
